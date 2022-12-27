@@ -15,24 +15,24 @@ from unetlib.feature_map_consolidator import FeatureMapConsolidator
 
 class BuildUnet(nn.Module):
     def __init__(
-            self,
-            dim,
-            init_dim=None,
-            out_dim=None,
-            frame_kernel_size=1,
-            dim_mults=(1, 2, 4, 8),
-            num_blocks_per_stage=(2, 2, 2, 2),
-            num_self_attn_per_stage=(0, 0, 0, 1),
-            nested_unet_depths=(0, 0, 0, 0),
-            nested_unet_dim=32,
-            channels=3,
-            use_convnext=False,
-            resnet_groups=8,
-            consolidate_upsample_fmaps=True,
-            skip_scale=2 ** -0.5,
-            weight_standardize=False,
-            attn_heads=8,
-            attn_dim_head=32,
+        self,
+        dim,
+        init_dim=None,
+        out_dim=None,
+        frame_kernel_size=1,
+        dim_mults=(1, 2, 4, 8),
+        num_blocks_per_stage=(2, 2, 2, 2),
+        num_self_attn_per_stage=(0, 0, 0, 1),
+        nested_unet_depths=(0, 0, 0, 0),
+        nested_unet_dim=32,
+        channels=3,
+        use_convnext=False,
+        resnet_groups=8,
+        consolidate_upsample_fmaps=True,
+        skip_scale=2**-0.5,
+        weight_standardize=False,
+        attn_heads=8,
+        attn_dim_head=32,
     ):
         super().__init__()
 
@@ -66,7 +66,9 @@ class BuildUnet(nn.Module):
         nested_unet_depths = cast_to_tuple(nested_unet_depths, num_resolutions)
         num_blocks_per_stage = cast_to_tuple(num_blocks_per_stage, num_resolutions)
         assert all([num_blocks > 0 for num_blocks in num_blocks_per_stage])
-        num_self_attn_per_stage = cast_to_tuple(num_self_attn_per_stage, num_resolutions)
+        num_self_attn_per_stage = cast_to_tuple(
+            num_self_attn_per_stage, num_resolutions
+        )
         assert all(
             [
                 num_self_attn_blocks >= 0
@@ -87,10 +89,10 @@ class BuildUnet(nn.Module):
             reversed(params[:-1]) for params in down_stage_parameters
         ]
         for ind, (
-                (dim_in, dim_out),
-                nested_unet_depth,
-                num_blocks,
-                self_attn_blocks,
+            (dim_in, dim_out),
+            nested_unet_depth,
+            num_blocks,
+            self_attn_blocks,
         ) in enumerate(zip(*down_stage_parameters)):
             skip_dims.append(dim_in)
 
@@ -146,10 +148,10 @@ class BuildUnet(nn.Module):
         self.mid_upsample = up_sample(mid_dim, dims[-2])
 
         for ind, (
-                (dim_in, dim_out),
-                nested_unet_depth,
-                num_blocks,
-                self_attn_blocks,
+            (dim_in, dim_out),
+            nested_unet_depth,
+            num_blocks,
+            self_attn_blocks,
         ) in enumerate(zip(*up_stage_parameters)):
             is_last = ind >= (num_resolutions - 1)
 
@@ -208,12 +210,12 @@ class BuildUnet(nn.Module):
     def forward(self, x):
         is_image = x.ndim == 4
         assert not (
-                is_image and not self.train_as_images
+            is_image and not self.train_as_images
         ), "you specified a frame kernel size for the convolutions in this unet, but you are passing in images"
-        assert not (
-                not is_image and self.train_as_images
-        ), "you specified no frame kernel size dimension, yet you are passing in a video. fold the frame dimension " \
-           "into the batch"
+        assert not (not is_image and self.train_as_images), (
+            "you specified no frame kernel size dimension, yet you are passing in a video. fold the frame dimension "
+            "into the batch"
+        )
 
         if is_image:
             x = rearrange(x, "b c h w -> b c 1 h w")
