@@ -14,13 +14,16 @@ from unetlib.feature_map_consolidator import FeatureMapConsolidator
 
 
 class BuildUnet(nn.Module):
+    """
+    The BuildUnet class helps in building the main unet and incorporate additional modifications to it like attention.
+    """
     def __init__(
         self,
         dim,
         init_dim=None,
         out_dim=None,
         frame_kernel_size=1,
-        dim_mults=(1, 2, 4, 8),
+        dim_multiplier=(1, 2, 4, 8),
         num_blocks_per_stage=(2, 2, 2, 2),
         num_self_attn_per_stage=(0, 0, 0, 1),
         nested_unet_depths=(0, 0, 0, 0),
@@ -46,7 +49,7 @@ class BuildUnet(nn.Module):
             channels, init_dim, **kernel_and_same_pad(frame_kernel_size, 7, 7)
         )
 
-        dims = [init_dim, *map(lambda m: dim * m, dim_mults)]
+        dims = [init_dim, *map(lambda m: dim * m, dim_multiplier)]
         in_out = list(zip(dims[:-1], dims[1:]))
 
         self.downs = nn.ModuleList([])
@@ -193,8 +196,8 @@ class BuildUnet(nn.Module):
         if consolidate_upsample_fmaps:
             self.consolidator = FeatureMapConsolidator(
                 dim,
-                dim_ins=tuple(map(lambda m: dim * m, dim_mults)),
-                dim_outs=(dim,) * len(dim_mults),
+                dim_ins=tuple(map(lambda m: dim * m, dim_multiplier)),
+                dim_outs=(dim,) * len(dim_multiplier),
                 conv_block_fn=blocks,
             )
         else:
